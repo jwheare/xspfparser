@@ -1,0 +1,3 @@
+XSPF specific extension of the Universal Feed Parser <http://feedparser.org>
+
+Handles variously well-formed XSPFs with aplomb and grace. Doesn't have a test suite yet. And I didn't really look at the spec, but it's working for everything I tried. Let me know if you see bugs of course.
