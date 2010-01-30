@@ -1,3 +1,17 @@
-XSPF specific extension of the Universal Feed Parser <http://feedparser.org>
+XSPF parser
 
-Handles variously well-formed XSPFs with aplomb and grace. Doesn't have a test suite yet. And I didn't really look at the spec, but it's working for everything I tried. Let me know if you see bugs of course.
+XSPF specific extension of the Universal feed parser <http://feedparser.org>
+Handles variously well-formed XSPF 1.0 playlists <http://xspf.org/xspf-v1.html>
+
+Required: Python 2.1 or later
+Recommended: Python 2.3 or later
+Recommended: CJKCodecs and iconv_codec <http://cjkpython.i18n.org/>
+
+Command-line usage:
+    ./xspfparser.py http://example.com/playlst.xspf
+
+Library usage:
+    import xspfparser
+    result = xspfparser.parse(url)
+
+No test suite yet. I didn't really look at the spec while writing this, but it's working for everything I tried. Let me know if you see bugs of course.
