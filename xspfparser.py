@@ -68,7 +68,7 @@ FeedParserDict = XSPFParserDict
 class _XSPFParserMixin(_FeedParserMixin):
     def __init__(self, baseuri=None, baselang=None, encoding='utf-8'):
         self.namespaces['http://xspf.org/ns/0/'] = ''
-        self.can_be_relative_uri.extend(['location', 'info'])
+        self.can_be_relative_uri.extend(['location', 'info', 'identifier', 'image', 'license'])
         
         if _debug: sys.stderr.write('initializing XSPFParser\n')
         self.playlistdata = FeedParserDict() # playlist-level data
@@ -91,24 +91,10 @@ class _XSPFParserMixin(_FeedParserMixin):
         output = _FeedParserMixin.pop(self, element, stripWhitespace)
         # store output in appropriate place(s)
         if self.intrack:
-            if element == 'content':
-                self.tracks[-1].setdefault(element, [])
-                contentparams = copy.deepcopy(self.contentparams)
-                contentparams['value'] = output
-                self.tracks[-1][element].append(contentparams)
-            else:
-                self.tracks[-1][element] = output
-                if self.incontent:
-                    contentparams = copy.deepcopy(self.contentparams)
-                    contentparams['value'] = output
-                    self.tracks[-1][element + '_detail'] = contentparams
-        elif (self.inplaylist) and (not self.intextinput) and (not self.inimage):
+            self.tracks[-1][element] = output
+        elif self.inplaylist:
             context = self._getContext()
             context[element] = output
-            if self.incontent:
-                contentparams = copy.deepcopy(self.contentparams)
-                contentparams['value'] = output
-                context[element + '_detail'] = contentparams
         return output
     
     def _start_playlist(self, attrsD):
@@ -132,18 +118,10 @@ class _XSPFParserMixin(_FeedParserMixin):
         self.intrack = 0
     
     def _start_track(self, attrsD):
-        self.tracks.append(FeedParserDict())
-        self.push('track', 0)
         self.intrack = 1
-        self.guidislink = 0
-        id = self._getAttribute(attrsD, 'rdf:about')
-        if id:
-            context = self._getContext()
-            context['id'] = id
-        self._cdf_common(attrsD)
+        self.tracks.append(FeedParserDict())
     
     def _end_track(self):
-        self.pop('track')
         self.intrack = 0
     
     def _start_info(self, attrsD):
@@ -151,6 +129,12 @@ class _XSPFParserMixin(_FeedParserMixin):
 
     def _end_info(self):
         self.pop('info')
+    
+    def _start_title(self, attrsD):
+        self.push('title', attrsD)
+
+    def _end_title(self):
+        self.pop('title')
 
 if _XML_AVAILABLE:
     class _StrictXSPFParser(_XSPFParserMixin, xml.sax.handler.ContentHandler):
@@ -269,7 +253,6 @@ def parse(url_file_stream_or_string, etag=None, modified=None, agent=None, refer
     '''Parse a XSPF from a URL, file, stream, or string'''
     result = FeedParserDict()
     result['playlist'] = FeedParserDict()
-    result['tracks'] = [] # changed
     if _XML_AVAILABLE:
         result['bozo'] = 0
     if type(handlers) == types.InstanceType:
@@ -441,8 +424,8 @@ def parse(url_file_stream_or_string, etag=None, modified=None, agent=None, refer
         xspfparser = _LooseXSPFParser(baseuri, baselang, known_encoding and 'utf-8' or '') # changed
         xspfparser.feed(data) # changed
     result['playlist'] = xspfparser.playlistdata # changed
-    result['tracks'] = xspfparser.tracks # changed
-    result['version'] = xspfparser.version # changed
+    result['playlist']['track'] = xspfparser.tracks # changed
+    result['playlist']['version'] = xspfparser.version # changed
     result['namespaces'] = xspfparser.namespacesInUse
     return result
 
